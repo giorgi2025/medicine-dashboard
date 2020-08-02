@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 const Brand = mongoose.model('Brand');
+const path = require('path');
 
 exports.allBrands = async (req, res) =>  {
 
@@ -24,8 +25,8 @@ exports.addBrand = async (req, res) =>  {
                 } else {
                     
                     let imageFile = req.files.file;
-          
-                    imageFile.mv(`client/public/assets/images/brands/${req.body.fileName}`, function(err) {
+                    const filePath = path.join(__dirname, "..", "client","public","assets","images","brands",`${req.body.fileName}`);
+                    imageFile.mv(filePath, function(err) {
                       if (err) {
                         console.log(err);
                       }
