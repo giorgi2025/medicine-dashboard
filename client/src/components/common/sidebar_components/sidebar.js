@@ -33,6 +33,7 @@ export class sidebar extends Component {
                 MENUITEMS.push(oneItem);
             });
         } else {
+            console.log(this.props.userBrands)
             this.props.userBrands.map(brand => {
                 if(brand._brandId.allow) {
                     let tempCount = 0;
