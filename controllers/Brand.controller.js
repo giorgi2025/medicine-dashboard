@@ -23,12 +23,11 @@ exports.addBrand = async (req, res) =>  {
                     console.log(err)
                     return res.json({success: false, errMessage: "Unknown errors occurred while adding."});
                 } else {
-                    
+                    return res.json({error:"err"})
                     let imageFile = req.files.file;
                     const filePath = path.join(__dirname, "..", "client","public","assets","images","brands",`${req.body.fileName}`);
                     imageFile.mv(filePath, function(err) {
                       if (err) {
-                          return res.json({error:err})
                         console.log(err);
                       }
                     });
