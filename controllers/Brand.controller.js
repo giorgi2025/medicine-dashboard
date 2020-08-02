@@ -26,7 +26,7 @@ exports.addBrand = async (req, res) =>  {
                     
                     let imageFile = req.files.file;
                     const filePath = path.join(__dirname, "..", "client","public","assets","images","brands",`${req.body.fileName}`);
-                    imageFile.mv(`../client/public/assets/images/brands/${req.body.fileName}`, function(err) {
+                    imageFile.mv(filePath, function(err) {
                       if (err) {
                           return res.json({error:err});
                         console.log(err);
