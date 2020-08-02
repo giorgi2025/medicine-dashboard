@@ -1,0 +1,21 @@
+export const INITIALIZE_ALL_VALUE = 'INITIALIZE_ALL_VALUE';
+export const UNKNOWN_ERROR = 'UNKNOWN_ERROR';
+export const SET_SIDEBAR_MENUITEM = 'SET_SIDEBAR_MENUITEM';
+export const SET_TAB_STATUS = 'SET_TAB_STATUS';
+
+export const SIGNUP = 'SIGNUP';
+export const LOGOUT = 'LOGOUT';
+export const USER_LOGIN = 'USER_LOGIN';
+export const ADMIN_LOGIN = 'ADMIN_LOGIN';
+export const ALL_USERS = 'ALL_USERS';
+export const ADD_NEW_USER = 'ADD_NEW_USER';
+export const UPDATE_USER = 'UPDATE_USER';
+export const DELETE_USER = 'DELETE_USER';
+export const ALL_BRANDS = 'ALL_BRANDS';
+export const ADD_NEW_BRAND = 'ADD_NEW_BRAND';
+export const UPDATE_BRAND = 'UPDATE_BRAND';
+export const DELETE_BRAND = 'DELETE_BRAND';
+export const ALL_ITEMS = 'ALL_ITEMS';
+export const ADD_NEW_ITEM = 'ADD_NEW_ITEM';
+export const UPDATE_ITEM = 'UPDATE_ITEM';
+export const DELETE_ITEM = 'DELETE_ITEM';
