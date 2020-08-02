@@ -8,7 +8,7 @@ const configFormData = {
 }
 
 // axios.defaults.baseURL = Config.api_url;
-
+//
 // Shopper
 export const signup = (userData) => dispatch => {
     axios
