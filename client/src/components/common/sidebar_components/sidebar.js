@@ -33,21 +33,22 @@ export class sidebar extends Component {
                 MENUITEMS.push(oneItem);
             });
         } else {
-            console.log(this.props.userBrands)
-            this.props.userBrands.map(brand => {
-                if(brand._brandId.allow) {
-                    let tempCount = 0;
-                    this.props.items.map(item => {
-                        if(item._brandId._id === brand._brandId._id)
-                            ++tempCount;
-                    })
+            if(this.props.user.brands !== undefined) {
+                this.props.user.brands.map(brand => {
+                    if(brand._brandId.allow) {
+                        let tempCount = 0;
+                        this.props.items.map(item => {
+                            if(item._brandId._id === brand._brandId._id)
+                                ++tempCount;
+                        })
 
-                    let oneItem = {
-                        path: `/brands/${brand._brandId._id}`, title: brand._brandId.name, count: tempCount, number: ++index, type: 'link', badgeType: 'primary', active: false, id: brand._brandId._id
+                        let oneItem = {
+                            path: `/brands/${brand._brandId._id}`, title: brand._brandId.name, count: tempCount, number: ++index, type: 'link', badgeType: 'primary', active: false, id: brand._brandId._id
+                        }
+                        MENUITEMS.push(oneItem);
                     }
-                    MENUITEMS.push(oneItem);
-                }
-            })
+                })
+            }
         }
 
         this.setState({
@@ -205,7 +206,7 @@ export class sidebar extends Component {
 }
 
 const mapStateToProps = state => ({
-    userBrands: state.user.user.brands,
+    user: state.user.user,
     activeBrands: state.brand.activeBrands,
     items: state.item.items,
 });
