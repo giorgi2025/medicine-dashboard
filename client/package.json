@@ -2,7 +2,7 @@
   "name": "brand-database",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://react.pixelstrap.com/multikart-admin/",
+  "homepage": ".",
   "dependencies": {
     "@material-ui/core": "^4.11.0",
     "availity-reactstrap-validation": "^2.6.0",
