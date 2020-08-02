@@ -116,7 +116,7 @@ export const addBrand = (brandObj) => dispatch => {
                     payload: res.data.brands
                 })
 
-                window.location = "/addRemoveBrand";
+                // window.location = "/addRemoveBrand";
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
