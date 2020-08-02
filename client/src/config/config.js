@@ -1,3 +1,5 @@
 export const Config = {
-    'api_url': 'http://localhost:5000'
+    'api_url': process.env.NODE_ENV === 'production' 
+        ? '.'
+        : 'http://localhost:5000',
 }

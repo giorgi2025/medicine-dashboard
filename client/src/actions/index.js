@@ -7,9 +7,8 @@ const configFormData = {
     headers: { 'content-type': 'multipart/form-data' }
 }
 
-// axios.defaults.baseURL = Config.api_url;
-//
-// Shopper
+axios.defaults.baseURL = Config.api_url;
+
 export const signup = (userData) => dispatch => {
     axios
         .post("/user/signup", userData)
