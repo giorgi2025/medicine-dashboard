@@ -6,7 +6,6 @@ import { Config } from '../config/config';
 const configFormData = {     
     headers: { 'content-type': 'multipart/form-data' }
 }
-//
 axios.defaults.baseURL = Config.api_url;
 
 export const signup = (userData) => dispatch => {
