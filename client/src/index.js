@@ -107,8 +107,8 @@ class Root extends Component {
                             <Route path={`${process.env.PUBLIC_URL}/menus/list-menu`} component={List_menu} />
                             <Route path={`${process.env.PUBLIC_URL}/menus/create-menu`} component={Create_menu} />
 
-                            <Route path={`${process.env.PUBLIC_URL}/users/list-user`} component={List_user} />
-                            <Route path={`${process.env.PUBLIC_URL}/users/create-user`} component={Create_user} />
+                            {/* <Route path={`${process.env.PUBLIC_URL}/users/list-user`} component={List_user} />
+                            <Route path={`${process.env.PUBLIC_URL}/users/create-user`} component={Create_user} /> */}
 
                             <Route path={`${process.env.PUBLIC_URL}/vendors/list_vendors`} component={List_vendors} />
                             <Route path={`${process.env.PUBLIC_URL}/vendors/create-vendors`} component={Create_vendors} />

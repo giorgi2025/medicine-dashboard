@@ -11,7 +11,7 @@ import rootReducer from '../reducers';
 function saveToLocalStorage(state) {
     try {
         const serializedState = JSON.stringify(state)
-        localStorage.setItem('brand', serializedState)
+        localStorage.setItem('state', serializedState)
     }catch(e){
         console.log(e);
     }
@@ -19,7 +19,7 @@ function saveToLocalStorage(state) {
 
 function loadFromLocalStorage() {
     try {
-        const serializedState = localStorage.getItem('brand')
+        const serializedState = localStorage.getItem('state')
         if(serializedState === null) return undefined
         return JSON.parse(serializedState)
     }catch (e) {
