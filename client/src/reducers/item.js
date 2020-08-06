@@ -2,6 +2,7 @@ import * as types from '../constants/ActionTypes'
 
 export const itemState = {
     items: [],
+    tabData: [],
 };
 
 export default function(state = itemState, action) {
@@ -11,6 +12,13 @@ export default function(state = itemState, action) {
             return {
                 ...state,
                 items: action.payload,
+            }
+        }
+
+        case types.TAB_DATA: {
+            return {
+                ...state,
+                tabData: action.payload,
             }
         }
 

@@ -54,11 +54,11 @@ exports.allUsers = async (req, res) =>  {
 exports.updateUser = async (req, res) =>  {
 
     let userObj = new User(req.body);
-    // userObj.setPassword(req.body.password);
+    userObj.setPassword(req.body.password);
 
     User.findByIdAndUpdate(userObj._id, {
         username: userObj.username,
-        // password: userObj.password,
+        password: userObj.password,
         name: userObj.name,
         brands: userObj.brands,
     }, {

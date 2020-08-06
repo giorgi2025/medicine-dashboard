@@ -10,6 +10,9 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { connect } from 'react-redux';
 import { updateUser, deleteUser, initializeAll } from '../../actions'
 
+import { Config } from '../../config/config';
+import crypto from 'crypto';
+
 export class UserList extends Component {
     constructor(props) {
         super(props)
@@ -32,16 +35,19 @@ export class UserList extends Component {
         this.props.users.map(user => {
             let userBrand = "";
             let count = 0;
-            user.brands.map(oneItem => {
-                if( count === 0)
-                    userBrand += oneItem._brandId.name;
-                else
-                    userBrand += ", " + oneItem._brandId.name;
-                count ++;
-            })
+            if(user.brands.length > 0) {
+                user.brands.map(oneItem => {
+                    if( count === 0)
+                        userBrand += oneItem._brandId.name;
+                    else
+                        userBrand += ", " + oneItem._brandId.name;
+                    count ++;
+                })
+            }
             let oneData = {
                 Name: user.name,
                 UserName: user.username,
+                Password: this.getPassword(user.password),
                 Brands: userBrand,
                 CreatedAt: user.createdTime,
             }
@@ -57,6 +63,20 @@ export class UserList extends Component {
     componentWillMount() {
         this.createTableData();
     }
+
+    getPassword(str) {
+        let salt = Config.salt;
+        let textParts = str.split('g');
+        let iv = Buffer.from(textParts.shift(), 'hex');
+        let encryptedText = Buffer.from(textParts.join('g'), 'hex');
+        let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(salt), iv);
+        let decrypted = decipher.update(encryptedText);
+       
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+       
+        return decrypted.toString();
+    }
+
     onOpenModal = () => {
         this.setState({ open: true });
     };
@@ -227,8 +247,34 @@ export class UserList extends Component {
 
         const columns = [];
 
-        const widthList = [ 200, 250, 600, 250]
+        const widthList = [ 200, 250, 200, 400, 250]
         let index = 0;
+
+        //Create table's data.
+        var tableData = [];
+        var userList = [];
+        this.props.users.map(user => {
+            let userBrand = "";
+            let count = 0;
+            if(user.brands.length > 0) {
+                user.brands.map(oneItem => {
+                    if( count === 0)
+                        userBrand += oneItem._brandId.name;
+                    else
+                        userBrand += ", " + oneItem._brandId.name;
+                    count ++;
+                })
+            }
+            let oneData = {
+                Name: user.name,
+                UserName: user.username,
+                Password: this.getPassword(user.password),
+                Brands: userBrand,
+                CreatedAt: user.createdTime,
+            }
+            tableData.push(oneData);
+            userList.push(user);
+        });
 
         for (var key in myData[0]) {
             columns.push({
@@ -256,7 +302,7 @@ export class UserList extends Component {
 
                                 let userBrands = [];
                                 let number = 0;
-                                allUsers[row.index].brands.map( brand => {
+                                this.props.users[row.index].brands.map( brand => {
                                     let oneBrand = {
                                         number: number,
                                         _brandId: brand._brandId,
@@ -275,6 +321,7 @@ export class UserList extends Component {
                                     currentId: allUsers[row.index]._id,
                                     name: allUsers[row.index].name,
                                     username: allUsers[row.index].username,
+                                    password: this.getPassword(allUsers[row.index].password),
                                     brands: userBrands,
                                 })
                                 this.onOpenModal();
@@ -288,7 +335,7 @@ export class UserList extends Component {
                         <span
                             onClick={() => {
                                 if (window.confirm('Are you sure you wish to delete this user?')) {
-                                    let currentId = allUsers[row.index]._id;
+                                    let currentId = this.props.users[row.index]._id;
                                     this.props.deleteUser(currentId);
                                 }
                             }}
@@ -307,7 +354,7 @@ export class UserList extends Component {
         return (
             <Fragment>
                 <ReactTable
-                    data={myData}
+                    data={tableData}
                     columns={columns}
                     defaultPageSize={pageSize}
                     className={myClass}
@@ -328,10 +375,10 @@ export class UserList extends Component {
                                 <label htmlFor="recipient-name" className="col-form-label" >User Name :</label>
                                 <input type="text" className="form-control" name="username" value={this.state.username} onChange={this.handleChange} />
                             </div>
-                            {/* <div className="form-group">
+                            <div className="form-group">
                                 <label htmlFor="recipient-name" className="col-form-label" >Password :</label>
                                 <input type="text" className="form-control" name="password" value={this.state.password} onChange={this.handleChange} />
-                            </div> */}
+                            </div>
                             <div className="form-group">
                                 <label htmlFor="recipient-name" className="col-form-label" >Brands Access :</label>
                                 {this.state.brands.map(brand =>  

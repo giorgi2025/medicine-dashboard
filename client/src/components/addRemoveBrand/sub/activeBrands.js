@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Modal from 'react-responsive-modal';
 
 import { connect } from 'react-redux';
-import { updateBrand, deleteBrand } from '../../../actions';
+import { updateBrand, deleteBrand, initializeAll } from '../../../actions';
 
 export class ActiveBrands extends Component {
     constructor(props) {
@@ -18,7 +18,9 @@ export class ActiveBrands extends Component {
             brandName: "",
             brandPicture: "",
             currentId: "",
+            file: "",
         }
+
     }
 
     componentWillMount(){
@@ -28,7 +30,7 @@ export class ActiveBrands extends Component {
             if(brand.allow) {
                 let oneBrand = {
                     index: ++ index,
-                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width:150,height:35}} placeholder={"Brand picture"} />,
+                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width: 'auto', height: '50px',  marginLeft: 'auto', marginRight: 'auto'}} placeholder={"Brand picture"} />,
                     name: brand.name
                 }
                 data.push(oneBrand);
@@ -96,14 +98,15 @@ export class ActiveBrands extends Component {
     }
 
     save = async (e) => {
-        
+       
+        this.props.initializeAll();
         if(this.state.brandName === "") {
             toast.error("Before making current brand changes, please type new brand name.");
             return;
         }
 
         let pictureUrl = "";
-        if(this.uploadInput.files[0] === undefined) {
+        if(this.uploadInput.files.length === 0 ) {
             pictureUrl = this.state.brandPicture;
         } else {
             pictureUrl = this.uploadInput.files[0].name;
@@ -122,6 +125,14 @@ export class ActiveBrands extends Component {
         data.append('product',myJSON);
         await this.props.updateBrand(data);
 
+        this.setState({
+            open: false,
+            brandName: "",
+            brandPicture: "",
+            currentId: "",
+            file: "",
+        })
+
     }
 
     cancel = (e) => {
@@ -130,6 +141,16 @@ export class ActiveBrands extends Component {
             brandName: "",
             brandPicture: "",
             currentId: "",
+            file: "",
+        })
+        this.props.initializeAll();
+    }
+
+    handleFileChange = (event) => {
+        this.setState({
+            file: event.target.files[0] !== undefined
+                    ? URL.createObjectURL(event.target.files[0])
+                    : ""
         })
     }
 
@@ -144,7 +165,7 @@ export class ActiveBrands extends Component {
 
         const { open } = this.state;
 
-        for (var key in myData[0]) {
+        ["index", "image", "name"].map(key=> {
             columns.push({
                 accessor: key,
                 Cell: null,
@@ -156,7 +177,21 @@ export class ActiveBrands extends Component {
             });
 
             index ++;
-        }
+        })
+
+        index = 0;
+
+        var tableData = [];
+        this.props.activeBrands.map(brand => {
+            if(brand.allow) {
+                let oneBrand = {
+                    index: ++ index,
+                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width: 'auto', height: '50px',  marginLeft: 'auto', marginRight: 'auto'}} placeholder={"Brand picture"} />,
+                    name: brand.name
+                }
+                tableData.push(oneBrand);
+            }
+        });
 
         columns.push(
             {
@@ -204,7 +239,7 @@ export class ActiveBrands extends Component {
             <Fragment>
                 <ReactTable
                     TheadComponent={_ => null}
-                    data={myData}
+                    data={tableData}
                     columns={columns}
                     defaultPageSize={pageSize}
                     className={myClass}
@@ -212,7 +247,7 @@ export class ActiveBrands extends Component {
                 />
                 <Modal open={open} onClose={this.cancel} >
                     <div className="modal-header">
-                        <h5 className="modal-title f-w-600" id="exampleModalLabel2">Add Brand</h5>
+                        <h5 className="modal-title f-w-600" id="exampleModalLabel2">Edit Brand</h5>
                     </div>
                     <div className="modal-body">
                         <form>
@@ -220,10 +255,20 @@ export class ActiveBrands extends Component {
                                 <label htmlFor="recipient-name" className="col-form-label" >Brand Name :</label>
                                 <input type="text" className="form-control" name="brandName" value={this.state.brandName} onChange={this.onChange} />
                             </div>
-                            <div className="form-group">
-                                <label htmlFor="message-text" className="col-form-label">Brand Image :</label>
-                                <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" required={true}/>
+
+                            {this.state.file !== "" ?
+                                <div className="form-group">                                                              
+                                    <img className="form-control" src={this.state.file} style={{width: 300, height: 'auto', marginLeft: 'auto', marginRight: 'auto'}} />
+                                </div>
+                                :
+                                <div className="form-group row">                                                              
+                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${this.state.brandPicture}`} style={{width:300,height:'auto', marginRight: 'auto', marginLeft: 'auto'}} placeholder={"Item picture"} />
+                                </div>
+                            }
+                            <div className="form-group">                                                              
+                                <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" onChange={this.handleFileChange} required={true}/>
                             </div>
+
                         </form>
                     </div>
                     <div className="modal-footer">
@@ -245,5 +290,5 @@ const mapStateToProps = state => ({
 
 export default connect(
     mapStateToProps,
-    { updateBrand, deleteBrand }
+    { updateBrand, deleteBrand, initializeAll }
 )(ActiveBrands);

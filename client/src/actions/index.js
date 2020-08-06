@@ -116,7 +116,7 @@ export const addBrand = (brandObj) => dispatch => {
                     payload: res.data.brands
                 })
 
-                // window.location = "/addRemoveBrand";
+                window.location = "/addRemoveBrand";
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -138,7 +138,7 @@ export const updateBrand = (brandObj) => dispatch => {
                     payload: res.data.brands
                 })
 
-                window.location = "/addRemoveBrand";
+                // window.location = "/addRemoveBrand";
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -226,7 +226,7 @@ export const addItem = (itemObj) => dispatch => {
                     payload: res.data.items
                 })
 
-                window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
+                // window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -282,7 +282,7 @@ export const updateItem = (itemObj, currentTabStatus) => dispatch => {
                     payload2: tabIndex
                 })
 
-                window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
+                // window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -338,7 +338,7 @@ export const updateItemStatus = (itemObj, currentTabStatus) => dispatch => {
                     payload2: tabIndex
                 })
 
-                window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
+                // window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -361,7 +361,7 @@ export const deleteItem = (id) => dispatch => {
                     payload: res.data.items
                 })
 
-                window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
+                // window.location = `/brands/${store.getState().currentStatus.currentBrandId}`;
             } else {    
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -386,7 +386,6 @@ export const allUsers = () => dispatch => {
                     type: types.ALL_USERS,
                     payload: res.data.users
                 })
-                console.log(res.data)
             } else {
                 alert(res.data.errMessage)
             }
@@ -404,8 +403,7 @@ export const addUser = (userObj) => dispatch => {
                     type: types.ALL_USERS,
                     payload: res.data.users
                 })
-
-                window.location = `/users`;
+                // window.location = `/users`;
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -427,7 +425,7 @@ export const updateUser = (userObj) => dispatch => {
                     payload: res.data.users
                 })
 
-                window.location = `/users`;
+                // window.location = `/users`;
             } else {
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -449,7 +447,7 @@ export const deleteUser = (id) => dispatch => {
                     payload: res.data.users
                 })
 
-                window.location = `/users`;
+                // window.location = `/users`;
             } else {    
                 dispatch({
                     type: types.UNKNOWN_ERROR,
@@ -463,10 +461,34 @@ export const deleteUser = (id) => dispatch => {
 }
 
 export const setSidebarMenuItem = (menu) => dispatch => {
-
     dispatch({
         type: types.SET_SIDEBAR_MENUITEM,
         payload: menu,
         payload2: 0
+    })
+}
+
+export const createItemIdList = (items, currentBrandId, currentTabStatus) => dispatch => {
+    let tempData = [];
+    items.map(item => {
+        if( (item._brandId._id === currentBrandId) && (item.status === currentTabStatus) ) {
+            tempData.push(item);
+        }
+    })
+    dispatch({
+        type: types.TAB_DATA,
+        payload: tempData,
+    })
+}
+
+export const setUploadedFile = (uploadedFile) => dispatch => {
+    dispatch({
+        type: types.SET_UPLOADED_FILE,
+        payload: uploadedFile
+    })
+}
+export const cancelUploadedFile = (canceledFile) => dispatch => { 
+    dispatch({
+        type: types.CANCEL_UPLOADED_FILE,
     })
 }

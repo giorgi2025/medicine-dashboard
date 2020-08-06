@@ -19,3 +19,6 @@ export const ALL_ITEMS = 'ALL_ITEMS';
 export const ADD_NEW_ITEM = 'ADD_NEW_ITEM';
 export const UPDATE_ITEM = 'UPDATE_ITEM';
 export const DELETE_ITEM = 'DELETE_ITEM';
+export const TAB_DATA = 'TAB_DATA';
+export const SET_UPLOADED_FILE = 'SET_UPLOADED_FILE';
+export const CANCEL_UPLOADED_FILE = 'CANCEL_UPLOADED_FILE';

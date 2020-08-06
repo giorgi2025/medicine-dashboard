@@ -4,6 +4,7 @@ export const currentStatus = {
     unknown_error: "",
     currentBrandId: "",
     currentTabIndex: 0,
+    uploadedFile: null,
 };
 
 export default function(state = currentStatus, action) {
@@ -13,6 +14,7 @@ export default function(state = currentStatus, action) {
             return {
                 ...state,
                 unknown_error: "",
+                uploadedFile: null,
             }
 
         case types.UNKNOWN_ERROR: {
@@ -27,6 +29,20 @@ export default function(state = currentStatus, action) {
                 ...state,
                 currentBrandId: action.payload,
                 currentTabIndex: action.payload2,
+            }
+        }
+
+        case types.SET_UPLOADED_FILE: {
+            return {
+                ...state,
+                uploadedFile: action.payload
+            }
+        }
+
+        case types.CANCEL_UPLOADED_FILE: {
+            return {
+                ...state,
+                uploadedFile: null
             }
         }
         

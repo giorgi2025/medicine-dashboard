@@ -1,3 +1,4 @@
+var Config = require('../config/config');
 var mongoose = require('mongoose');
 const Item = mongoose.model('Item');
 const fs = require("fs");
@@ -32,7 +33,7 @@ exports.addItem = async (req, res) =>  {
 
                     let imageFile = req.files.file;
           
-                    imageFile.mv(`client/public/assets/images/items/${req.body.fileName}`, function(err) {
+                    imageFile.mv(`client/${Config.fileUploadedSubPath}/assets/images/items/${req.body.fileName}`, function(err) {
                       if (err) {
                         console.log(err);
                       }
@@ -61,7 +62,9 @@ exports.updateItem = async (req, res) =>  {
     Item.findByIdAndUpdate(itemObj._id, {
         upc: itemObj.upc,
         _brandId: itemObj._brandId,
+        brand: itemObj.brand,
         picture: itemObj.picture,
+        picture2: itemObj.picture2,
         title: itemObj.title,
         titleArab: itemObj.titleArab,
         formValue: itemObj.formValue,
@@ -83,13 +86,23 @@ exports.updateItem = async (req, res) =>  {
         } else {
 
             if(req.files !== null) {
-                let imageFile = req.files.file;
-            
-                imageFile.mv(`client/public/assets/images/items/${req.body.fileName}`, function(err) {
-                if (err) {
-                    console.log(err);
+                let imageFile = null;
+                if(req.files.file !== undefined) {
+                    imageFile = req.files.file;
+                    imageFile.mv(`client/${Config.fileUploadedSubPath}/assets/images/items/${req.body.fileName}`, function(err) {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
                 }
-                });
+                if(req.files.file2 !== undefined) {
+                    imageFile = req.files.file2;
+                    imageFile.mv(`client/${Config.fileUploadedSubPath}/assets/images/items/${req.body.fileName2}`, function(err) {
+                        if (err) {
+                            console.log(err);
+                        }
+                    });
+                }
             }
 
             let items = await Item.find().populate("_brandId");
@@ -163,7 +176,7 @@ exports.CSV = async (req, res) =>  {
         }
         CSVData = data;
         CSVData.map((row,index) => {
-            const pathToFile = path.join(__dirname,"..","client","public","assets","images","items",`${row.picture}`)
+            const pathToFile = path.join(__dirname,"..","client", Config.fileUploadedSubPath,"assets","images","items",`${row.picture}`);
             const pathToNewDestination = path.join(__dirname,"..", "csv", `${row.picture}`);
             fs.copyFile(pathToFile, pathToNewDestination, function(err) {
                 if (err) {
@@ -172,8 +185,21 @@ exports.CSV = async (req, res) =>  {
                     console.log("Successfully copied and moved the file!")
                 }
             });
+
+            if(row.picture2 !==""){
+                const pathToFile2 = path.join(__dirname,"..","client", Config.fileUploadedSubPath,"assets","images","items",`${row.picture2}`);
+                const pathToNewDestination2 = path.join(__dirname,"..", "csv", `${row.picture2}`);
+                fs.copyFile(pathToFile2, pathToNewDestination2, function(err) {
+                    if (err) {
+                        throw err
+                    } else {
+                        console.log("Successfully copied and moved the file!")
+                    }
+                });
+            }
+ 
         })
-        fields = ['upc','title','titleArab','formValue','typeValue','unit','size','description','howToUse','descriptionArab','howToUseArab','comments','status'] 
+        fields = ['upc','brand','title','titleArab','formValue','typeValue','unit','size','description','howToUse','descriptionArab','howToUseArab','comments','status'] 
        
         if (err) res.send(err);   
         let csv;
@@ -208,7 +234,7 @@ exports.CSV = async (req, res) =>  {
                         if(o.error) console.error(o.error);
                     });
     
-                }, 6000);
+                }, 9000);
                 res.download(folderpath + '/archive.zip');
             }
         });

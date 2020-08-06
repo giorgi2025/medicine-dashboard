@@ -1,7 +1,6 @@
 import React, { Component, Fragment} from 'react'
 import Modal from 'react-responsive-modal';
 import 'react-toastify/dist/ReactToastify.css';
-import data from '../../assets/data/listUser';
 import UserList from './userList';
 
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -170,7 +169,7 @@ export class Users extends Component {
                 <div className="container-fluid">
                     <div className="row">
                         <div className="col-sm-12">
-                            <div className="card">
+                            <div className="card" style={{marginTop: 80}}>
                                 <div className="card-header">
                                     <h5>Users</h5>
                                 </div>
@@ -296,7 +295,6 @@ export class Users extends Component {
                                     <div id="basicScenario" className="product-physical">
                                         <UserList
                                             multiSelectOption={false}
-                                            myData={data} 
                                             pageSize={5} 
                                             pagination={true}
                                             class="-striped -highlight" 

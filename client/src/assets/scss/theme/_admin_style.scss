@@ -62,7 +62,8 @@
   }
 }
 .tab-coupon {
-  background-color: #0069D9 !important;
+  // background-color: #0069D9 !important;
+  background: linear-gradient(to right, rgb(0, 209, 253), rgb(0, 141, 216));
   height: 80px;
   li {
     padding-top: 20px;
@@ -564,7 +565,6 @@ a {
 .page-wrapper {
   .page-body-wrapper {
     .page-sidebar {
-      background-color: #0069D9 !important;
       .sidebar-menu {
         li {
           width: 100%;
@@ -921,7 +921,7 @@ a {
     .nav-link {
       // color: $font-color;
       color: white;
-      width: 12%;
+      width: 16.666%;
       transition: 0.3s;
       cursor: pointer;
       &.react-tabs__tab--selected,
@@ -1756,7 +1756,8 @@ $header-size: 80px;
       min-height: calc(100vh - #{$header-size});
       // margin-top: $header-size;
       margin-top: 50px;
-      padding: $page-body-padding;
+      // padding: $page-body-padding;
+      padding: 0;
       position: relative;
       background-color: $light-color;
     }
@@ -2235,7 +2236,7 @@ ul.notification-dropdown.onhover-show-div {
         // height: $header-size;
         padding: $main-header-padding;
         align-items: center;
-        background-color: white !important;
+        // background-color: white !important;
         z-index: $main-header-z-index;
         box-shadow: -3px 1px 3px 1px rgba(68, 102, 242, 0.1);
         .logo-wrapper {
@@ -2270,7 +2271,7 @@ ul.notification-dropdown.onhover-show-div {
       .sidebar-menu {
         list-style: $sidebar-menu-list-style;
         margin: $sidebar-menu-list-margin;
-        padding: $sidebar-menu-padding;
+        padding: $sidebar-menu-padding 0;
         .sidebar-header {
           font-size: $sidebar-font-size;
           letter-spacing: $sidebar-letter-specing;
@@ -2280,7 +2281,7 @@ ul.notification-dropdown.onhover-show-div {
           text-transform: $sidebar-txt-transform;
           font-weight: $sidebar-font-weight;
           // color: $sidebar-font-color;
-          color: white;
+          color: black;
           svg {
             width: $sidebar-icon-size;
             height: $sidebar-icon-size;
@@ -2308,8 +2309,9 @@ ul.notification-dropdown.onhover-show-div {
             display: block;
             transition: $sidebar-transition;
             &.active {
-              background-color: white;
-              color: black;
+              // background-color: white;
+              background: linear-gradient(to right, rgb(0, 209, 253), rgb(0, 141, 216));
+              color: white;
               // color: $sidebar-hover-txt-color;
               transition: $sidebar-transition;
             }
@@ -2359,7 +2361,7 @@ ul.notification-dropdown.onhover-show-div {
               width: auto;
               height: auto;
               padding: 0;
-              margin-right: 10px;
+              // margin-right: 10px;
               margin-top: 10px;
               transform: rotate(-90deg);
               transition: $sidebar-transition;
@@ -2370,7 +2372,7 @@ ul.notification-dropdown.onhover-show-div {
               a {
                 > .fa-angle-right {
                   &:before {
-                    content: $sidebar-open-icon;
+                    // content: $sidebar-open-icon;
                     font-family: $sidebar-icon-font-family;
                     transition: $sidebar-transition;
                   }
@@ -2450,6 +2452,7 @@ ul.notification-dropdown.onhover-show-div {
       ~ .page-body {
         margin-left: $sidebar-width;
         transition: $sidebar-transition;
+        background-color: rgb(222, 243, 249);
       }
 
       &.open {
@@ -4081,7 +4084,6 @@ $i: 1;
 .react-tabs .nav-tabs .nav-link.react-tabs__tab--selected, .react-tabs .nav-tabs .nav-link:hover, .react-tabs .nav-tabs .nav-link:focus {
   color: black;
   background-color: white;
-  box-shadow:inset 0px -1px 2px 0px #0069D9;
   border-radius: 0px !important;
 }
 
@@ -4110,5 +4112,30 @@ $i: 1;
 }
 
 .styles_modal__gNwvD {
-  width: 800px;
+  width: 1000px;
+  max-width: 1000px !important;
 }
+
+form {
+  padding-right: 15px;
+}
+
+.dropzone{
+    .dz-preview.dz-image-preview{
+      background:transparent !important;
+    }
+    .dz-error-message,.dz-preview.dz-error .dz-error-mark{
+      display:none !important;
+    }
+    .dz-remove{
+      padding:0.25rem;
+      background-color:$danger;
+      color:$white;
+      text-decoration: none;
+      border-radius:0.3125rem;
+      margin-top:1rem;
+      &:hover{
+          text-decoration: none;
+      }
+    }
+} 

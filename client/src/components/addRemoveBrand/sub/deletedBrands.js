@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Modal from 'react-responsive-modal';
 
 import { connect } from 'react-redux';
-import { updateBrand, activateBrand } from '../../../actions';
+import { updateBrand, activateBrand, initializeAll } from '../../../actions';
 
 export class DeletedBrands extends Component {
     constructor(props) {
@@ -18,6 +18,35 @@ export class DeletedBrands extends Component {
             brandName: "",
             brandPicture: "",
             currentId: "",
+            file: "",
+        }
+        
+        //Dropzone constants & methods
+        this.dropzone = null;
+        this.files = [];
+
+        this.djsConfig = {
+            addRemoveLinks: true,
+            acceptedFiles: "image/jpeg,image/png,image/gif",
+            maxFiles: 1
+        };
+   
+        this.dropzoneComponentConfig = {
+            iconFiletypes: ['.jpg', '.png', '.gif'],
+            showFiletypeIcon: true,
+            postUrl: '/',
+        };
+          
+        this.callbackArray = [() => console.log('Hi!'), () => console.log('Ho!')];
+        this.callback = (e) => {this.files.push(e);};
+        this.success = file => console.log('uploaded', file);
+        this.removedfile = file => {
+            for(let i = 0 ; i < this.files.length ; i ++ ) {
+                if(this.files[i] === file) {
+                    this.files.splice(i, 1);
+                    break;
+                }
+            }
         }
     }
 
@@ -28,7 +57,7 @@ export class DeletedBrands extends Component {
             if(!brand.allow) {
                 let oneBrand = {
                     index: ++ index,
-                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width:150,height:35}} placeholder={"Brand picture"} />,
+                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width: 'auto', height: '50px',  marginLeft: 'auto', marginRight: 'auto'}} placeholder={"Brand picture"} />,
                     name: brand.name
                 }
                 data.push(oneBrand);
@@ -96,6 +125,8 @@ export class DeletedBrands extends Component {
     }
 
     save = async (e) => {
+
+        this.props.initializeAll();
         
         if(this.state.brandName === "") {
             toast.error("Before making current brand changes, please type new brand name.");
@@ -103,7 +134,7 @@ export class DeletedBrands extends Component {
         }
 
         let pictureUrl = "";
-        if(this.uploadInput.files[0] === undefined) {
+        if(this.uploadInput.files.length === 0 ) {
             pictureUrl = this.state.brandPicture;
         } else {
             pictureUrl = this.uploadInput.files[0].name;
@@ -122,6 +153,14 @@ export class DeletedBrands extends Component {
         data.append('product',myJSON);
         await this.props.updateBrand(data);
 
+        this.setState({
+            open: false,
+            brandName: "",
+            brandPicture: "",
+            currentId: "",
+            files: ""
+        })
+
     }
 
     cancel = (e) => {
@@ -130,6 +169,16 @@ export class DeletedBrands extends Component {
             brandName: "",
             brandPicture: "",
             currentId: "",
+            files: ""
+        })
+        this.props.initializeAll();
+    }
+
+    handleFileChange = (event) => {
+        this.setState({
+            file: event.target.files[0] !== undefined
+                    ? URL.createObjectURL(event.target.files[0])
+                    : ""
         })
     }
 
@@ -144,7 +193,7 @@ export class DeletedBrands extends Component {
 
         const { open } = this.state;
 
-        for (var key in myData[0]) {
+        ["index", "image", "name"].map(key=> {
             columns.push({
                 accessor: key,
                 Cell: null,
@@ -152,11 +201,25 @@ export class DeletedBrands extends Component {
                     textAlign: key === 'index'? 'center' : 'left',
                     padding: 0
                 },
-                width: widthList[index]
+                maxWidth: widthList[index]
             });
 
             index ++;
-        }
+        })
+
+        index = 0;
+
+        let tableData = [];
+        this.props.deletedBrands.map(brand => {
+            if(!brand.allow) {
+                let oneBrand = {
+                    index: ++ index,
+                    image: <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brand.picture}`} style={{width: 'auto', height: '50px',  marginLeft: 'auto', marginRight: 'auto'}} placeholder={"Brand picture"} />,
+                    name: brand.name
+                }
+                tableData.push(oneBrand);
+            }
+        });
 
         columns.push(
             {
@@ -199,19 +262,28 @@ export class DeletedBrands extends Component {
             width: 150
         })
 
+        // For a list of all possible events (there are many), for dropzone component.
+        const eventHandlers = {
+            init: dz => this.dropzone = dz,
+            drop: this.callbackArray,
+            addedfile: this.callback,
+            success: this.success,
+            removedfile: this.removedfile
+        }
+
         return (
             <Fragment>
                 <ReactTable
                     TheadComponent={_ => null}
-                    data={myData}
+                    data={tableData}
                     columns={columns}
                     defaultPageSize={pageSize}
                     className={myClass}
                     showPagination={pagination}
                 />
                 <Modal open={open} onClose={this.cancel} >
-                    <div className="modal-header">
-                        <h5 className="modal-title f-w-600" id="exampleModalLabel2">Add Brand</h5>
+                <div className="modal-header">
+                        <h5 className="modal-title f-w-600" id="exampleModalLabel2">Edit Brand</h5>
                     </div>
                     <div className="modal-body">
                         <form>
@@ -219,10 +291,20 @@ export class DeletedBrands extends Component {
                                 <label htmlFor="recipient-name" className="col-form-label" >Brand Name :</label>
                                 <input type="text" className="form-control" name="brandName" value={this.state.brandName} onChange={this.onChange} />
                             </div>
-                            <div className="form-group">
-                                <label htmlFor="message-text" className="col-form-label">Brand Image :</label>
-                                <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" required={true}/>
+
+                            {this.state.file !== "" ?
+                                <div className="form-group">                                                              
+                                    <img className="form-control" src={this.state.file} style={{width: 300, height: 'auto', marginLeft: 'auto', marginRight: 'auto'}} />
+                                </div>
+                                :
+                                <div className="form-group row">                                                              
+                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${this.state.brandPicture}`} style={{width:300,height:'auto', marginRight: 'auto', marginLeft: 'auto'}} placeholder={"Item picture"} />
+                                </div>
+                            }
+                            <div className="form-group">                                                              
+                                <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" onChange={this.handleFileChange} required={true}/>
                             </div>
+
                         </form>
                     </div>
                     <div className="modal-footer">
@@ -244,5 +326,5 @@ const mapStateToProps = state => ({
 
 export default connect(
     mapStateToProps,
-    { updateBrand, activateBrand }
+    { updateBrand, activateBrand, initializeAll }
 )(DeletedBrands);

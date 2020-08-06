@@ -2,17 +2,14 @@ import React, { Component, Fragment} from 'react'
 import Modal from 'react-responsive-modal';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import data from '../../assets/data/category';
-import Submitted from './tabs/submitted';
-import Approved from './tabs/approved';
-import Arabic from './tabs/arabic';
-import Completed from './tabs/completed';
-import Confirmed from './tabs/confirmed';
-import Done from './tabs/done';
+import Datatable from './datatable';
 import { Tabs, TabList, TabPanel, Tab } from 'react-tabs';
 import { connect } from 'react-redux';
-import { addItem, initializeAll } from '../../actions'
+
+import * as service from '../../services';
+import { addItem, initializeAll, createItemIdList } from '../../actions'
 import { Config } from '../../config/config';
+
 import axios from 'axios';
 axios.defaults.baseURL = Config.api_url;
 
@@ -20,11 +17,13 @@ export class Brands extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            brandName: "",
             open: false,
+            brands: [],
             upc: "",
-            _brandId: this.props.currentBrandId,
+            _brandId: "",
+            brand: "",
             picture: "",
+            picture2: "",
             title: "",
             titleArab: "",
             formValue: "",
@@ -36,20 +35,31 @@ export class Brands extends Component {
             descriptionArab: "",
             howToUseArab: "",
             comments: "",
-            SubmittedCount: 0,
-            ApprovedCount: 0,
-            ArabicCount: 0,
-            CompletedCount: 0,
-            ConfirmedCount: 0,
-            DoneCount: 0,
+            flagComponentUpdate: true,
+            file: "",
+            isDoubleUPC: false,
         };
+
         this.props.initializeAll();
+
     }
 
     onChange = (e) => {
         this.setState({
             [e.target.name]: e.target.value
         })
+
+        if(e.target.name === "upc") {
+            let tempFlag = false;
+            this.props.items.map(item => {
+                if(item.upc === e.target.value) {
+                    tempFlag = true;
+                } 
+            })
+            this.setState({
+                isDoubleUPC: tempFlag
+            })
+        }
     }
 
     onOpenModal = () => {
@@ -61,67 +71,84 @@ export class Brands extends Component {
         this.setState({ open: false });
     };
 
-    getBrandName = () => {
-        let name = "";
-        this.props.activeBrands.map(brand => {
-            if(brand._id === this.props.currentBrandId) {
-                name = brand.name;
-            }
-        });
-        this.setState({
-            brandName: name
-        })
-    }
-
-    getAllCounts = () => {
-        let tempSubmittedCount = 0;
-        let tempApprovedCount = 0;
-        let tempArabicCount = 0;
-        let tempCompletedCount = 0;
-        let tempConfirmedCount = 0;
-        let tempDoneCount = 0;
-
-        this.props.items.map(item => {
-            if(item._brandId._id === this.props.currentBrandId) {
-                switch(item.status) {
-                    case "Submitted":
-                        tempSubmittedCount ++;
-                        break;
-                    case "Approved":
-                        tempApprovedCount ++;
-                        break;
-                    case "Arabic":
-                        tempArabicCount ++;
-                        break;
-                    case "Completed":
-                        tempCompletedCount ++;
-                        break;
-                    case "Confirmed":
-                        tempConfirmedCount ++;
-                        break;
-                    case "Done":
-                        tempDoneCount ++;
-                        break;
-                    default:
-                        tempSubmittedCount ++;
-                        break;
+    createBrandsOfState() {
+        let tempBrands = [];
+        let number = 0;
+        if(localStorage.getItem("role") === "0"){
+            this.props.activeBrands.map( brand => {
+                let oneBrand = {
+                    number: number,
+                    _brandId: brand._id,
+                    allow: brand.allow,
+                    name: brand.name,
+                    picture: brand.picture
                 }
-            }
-        })
+                tempBrands.push(oneBrand);
+                number ++;
+            });
+        } else {
+            this.props.user.brands.map(brand => {
+                let oneBrand = {
+                    number: number,
+                    _brandId: brand._brandId._id,
+                    allow: brand._brandId.allow,
+                    name: brand._brandId.name,
+                    picture: brand._brandId.picture,
+                }
+                tempBrands.push(oneBrand);
+                number ++;
+            });
+        }
 
         this.setState({
-            SubmittedCount: tempSubmittedCount,
-            ApprovedCount: tempApprovedCount,
-            ArabicCount: tempArabicCount,
-            CompletedCount: tempCompletedCount,
-            ConfirmedCount: tempConfirmedCount,
-            DoneCount: tempDoneCount,
+            brands: tempBrands,
+            _brandId: tempBrands.length > 0 ? tempBrands[0]._brandId : "",
         })
     }
 
     componentWillMount() {
-        this.getBrandName();
-        this.getAllCounts();
+        this.createBrandsOfState();
+        // this.nextFunc();
+    }
+
+    handleOneBrandOfItemChange = (e) => {
+        this.setState({
+            _brandId: e.target.value
+        })
+    }
+
+    getBrandId() {
+        let tempBrands = [], _brandId = "";
+        let number = 0;
+        if(localStorage.getItem("role") === "0"){
+            this.props.activeBrands.map( brand => {
+                let oneBrand = {
+                    number: number,
+                    _brandId: brand._id,
+                    allow: brand.allow,
+                    name: brand.name,
+                    picture: brand.picture
+                }
+                tempBrands.push(oneBrand);
+                number ++;
+            });
+        } else {
+            this.props.user.brands.map(brand => {
+                let oneBrand = {
+                    number: number,
+                    _brandId: brand._brandId._id,
+                    allow: brand._brandId.allow,
+                    name: brand._brandId.name,
+                    picture: brand._brandId.picture,
+                }
+                tempBrands.push(oneBrand);
+                number ++;
+            });
+        }
+
+        _brandId = tempBrands.length > 0 ? tempBrands[0]._brandId : "";
+        return _brandId;
+
     }
 
     changeFileName = (originalFileName, newFileName) => {
@@ -135,23 +162,40 @@ export class Brands extends Component {
     }
 
     save = () => {
+        this.props.initializeAll();
 
-        if(this.state.upc === "" || this.state._brandId === "" || this.state.title === "" || this.state.titleArab === "" || this.state.formValue === "" || this.state.typeValue === "" || this.state.unit === "" || this.state.size === "" || this.state.description === "" || this.state.howToUse === "" || this.state.descriptionArab === "" || this.state.howToUseArab === "" || this.state.comments === "" ) {
-            toast.error("Please type all fields correctly.");
+        if(this.props.activeBrands.length === 0) {
+            toast.error("Before adding new item, please add at least one brand!");
             return;
         }
 
-        if(this.uploadInput.files[0] === undefined) {
+        if(this.props.currentBrandId === "") {
+            toast.error("Before adding new item, please select any brand!");
+            return;
+        }
+
+        if(this.state.upc === "") {
+            toast.error("Please type utc field correctly.");
+            return;
+        }
+
+        if(this.state.isDoubleUPC) {
+            toast.error("upc already exists!");
+            return;
+        }
+
+        if(this.uploadInput.files.length === 0 ) {
             toast.error("Please upload the image of the item!");
             return;
         }
-
         let pictureUrl = this.changeFileName(this.uploadInput.files[0].name, this.state.upc);
 
         let newItem = {
             upc: this.state.upc,
-            _brandId: this.state._brandId,
+            _brandId: this.props.currentBrandId,
+            brand: this.state.brand,
             picture: pictureUrl,
+            picture2: this.state.picture2,
             title: this.state.title,
             titleArab: this.state.titleArab,
             formValue: this.state.formValue,
@@ -171,14 +215,12 @@ export class Brands extends Component {
         data.append('product',myJSON);
         this.props.addItem(data);
 
-    }
-
-    cancel = () => {
         this.setState({
             open: false,
+            brand: "",
             upc: "",
-            _brandId: this.props.currentBrandId,
             picture: "",
+            picture2: "",
             title: "",
             titleArab: "",
             formValue: "",
@@ -190,9 +232,34 @@ export class Brands extends Component {
             descriptionArab: "",
             howToUseArab: "",
             comments: "",
+            file: ""
         })
     }
-    
+
+    cancel = () => {
+        this.setState({
+            open: false,
+            brand: "",
+            upc: "",
+            picture: "",
+            picture2: "",
+            title: "",
+            titleArab: "",
+            formValue: "",
+            typeValue: "",
+            unit: "",
+            size: "",
+            description: "",
+            howToUse: "",
+            descriptionArab: "",
+            howToUseArab: "",
+            comments: "",
+            file: ""
+        })
+        this.props.initializeAll();
+
+    }
+
     renderAlert() {
         if (this.props.unknown_error !== "") {
             return (
@@ -219,8 +286,18 @@ export class Brands extends Component {
         .catch(err => console.log(err));
     }
 
+    handleFileChange = (event) => {
+        this.setState({
+            file: event.target.files[0] !== undefined
+                    ? URL.createObjectURL(event.target.files[0])
+                    : ""
+        })
+    }
+
     render() {
-        const { open, brandName, SubmittedCount, ApprovedCount, ArabicCount, CompletedCount, ConfirmedCount, DoneCount } = this.state;
+        const { open } = this.state;
+        const { SubmittedCount, ApprovedCount, ArabicCount, CompletedCount, ConfirmedCount, DoneCount } = this.props.categoryCountObj;
+        const { brandName, brandPicture } = this.props.brandInfo;
         let tabItems = [];
         if(localStorage.getItem("role") === "1" ) {
             this.props.user.brands.map(oneBrand => {
@@ -254,69 +331,147 @@ export class Brands extends Component {
                                     <div className="card">
                                         <div className="card-header">
                                             <button type="button" className="btn btn-primary pull-right" onClick={this.onOpenModal} data-toggle="modal" data-original-title="test" data-target="#exampleModal">Add Item</button>
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Submitted {SubmittedCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Submitted {SubmittedCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
     
                                             <div className="btn-popup">
 
-                                                <Modal open={open} onClose={this.onCloseModal} >
+                                                <Modal open={open} onClose={this.cancel} >
                                                     <div className="modal-header">
                                                         <h5 className="modal-title f-w-600" id="exampleModalLabel2">Add Item</h5>
                                                     </div>
                                                     <div className="modal-body">
                                                         <form>
                                                             {this.renderAlert()}
-                                                            <div className="form-group">                                                              
-                                                                <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" required={true}/>
+
+                                                            {this.state.file !== "" ?
+                                                                <div className="form-group">                                                              
+                                                                    <img className="form-control" src={this.state.file} style={{width: 900, height: 900, marginLeft: 'auto', marginRight: 'auto'}} />
+                                                                </div>
+                                                                :
+                                                                <></>
+                                                            }
+                                                            <div className="form-group row">                                                              
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Image :</span></label>
+                                                                <input className="form-control col-md-9" ref={(ref) => { this.uploadInput = ref; }} type="file" onChange={this.handleFileChange} required={true}/>
+                                                            </div>
+
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Product Info</span></label>
+                                                                <hr
+                                                                    style={{
+                                                                        color: 'rgb(233, 233, 233)',
+                                                                        width: '100%',
+                                                                        height: 5
+                                                                    }}
+                                                                    className="col-md-8"
+                                                                />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >UPC :</label>
-                                                                <input type="text" className="form-control col-md-7" name="upc" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">UPC :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="upc" onChange={this.onChange} placeholder="UPC" />
+                                                            </div>
+
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Brand :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="brand" onChange={this.onChange} placeholder="Brand" />
+                                                            </div>
+
+
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Title</span></label>
+                                                                <hr
+                                                                    style={{
+                                                                        color: 'rgb(233, 233, 233)',
+                                                                        width: '100%',
+                                                                        height: 5
+                                                                    }}
+                                                                    className="col-md-8"
+                                                                />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Title :</label>
-                                                                <input type="text" className="form-control col-md-7" name="title" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Title :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="title" onChange={this.onChange} placeholder="Title" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Title(Arab) :</label>
-                                                                <input type="text" className="form-control col-md-7" name="titleArab" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Title(Arab) :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="titleArab" onChange={this.onChange} placeholder="Title(Arab)" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Form :</label>
-                                                                <input type="text" className="form-control col-md-7" name="formValue" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Details</span></label>
+                                                                <hr
+                                                                    style={{
+                                                                        color: 'rgb(233, 233, 233)',
+                                                                        width: '100%',
+                                                                        height: 5
+                                                                    }}
+                                                                    className="col-md-8"
+                                                                />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Type :</label>
-                                                                <input type="text" className="form-control col-md-7" name="typeValue" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Form :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="formValue" onChange={this.onChange} placeholder="Form" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Unit Of Size :</label>
-                                                                <input type="text" className="form-control col-md-7" name="unit" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Type :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="typeValue" onChange={this.onChange} placeholder="Type" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Size :</label>
-                                                                <input type="text" className="form-control col-md-7" name="size" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Unit Of Size :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="unit" onChange={this.onChange} placeholder="Unit Of Size" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Product Description :</label>
-                                                                <input type="text" className="form-control col-md-7" name="description" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Size :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="size" onChange={this.onChange} placeholder="Size" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >How To Use?</label>
-                                                                <input type="text" className="form-control col-md-7" name="howToUse" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Description</span></label>
+                                                                <hr
+                                                                    style={{
+                                                                        color: 'rgb(233, 233, 233)',
+                                                                        width: '100%',
+                                                                        height: 5
+                                                                    }}
+                                                                    className="col-md-8"
+                                                                />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Product Description(Arab) :</label>
-                                                                <input type="text" className="form-control col-md-7" name="descriptionArab" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Description :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="description" onChange={this.onChange} placeholder="Product Description" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >How To Use(Arab)?</label>
-                                                                <input type="text" className="form-control col-md-7" name="howToUseArab" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">How To Use?</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="howToUse" onChange={this.onChange} placeholder="How To Use?" />
                                                             </div>
                                                             <div className="form-group row">
-                                                                <label htmlFor="recipient-name" className="col-form-label col-md-4" >Editor Comments :</label>
-                                                                <input type="text" className="form-control col-md-7" name="comments" onChange={this.onChange} />
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Description(Arab)</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="descriptionArab" onChange={this.onChange} placeholder="Product Description" />
+                                                            </div>
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">How To Use(Arab)?</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="howToUseArab" onChange={this.onChange} placeholder="How To Use(Arab)" />
+                                                            </div>
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Other</span></label>
+                                                                <hr
+                                                                    style={{
+                                                                        color: 'rgb(233, 233, 233)',
+                                                                        width: '100%',
+                                                                        height: 5
+                                                                    }}
+                                                                    className="col-md-8"
+                                                                />
+                                                            </div>
+                                                            <div className="form-group row">
+                                                                <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Editor Comments :</span></label>
+                                                                <input type="text" className="form-control col-md-9" name="comments" onChange={this.onChange} placeholder="UPC" />
                                                             </div>
                                                         </form>
                                                     </div>
@@ -328,9 +483,9 @@ export class Brands extends Component {
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Submitted
+                                                <Datatable
+                                                    currentTab="Submitted"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -348,16 +503,22 @@ export class Brands extends Component {
                                 <div className="col-sm-12">
                                     <div className="card">
                                         <div className="card-header">
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Approved {ApprovedCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Approved {ApprovedCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
                                             <div className="btn-popup pull-right">
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Approved
+                                                <Datatable
+                                                    currentTab="Approved"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -375,16 +536,22 @@ export class Brands extends Component {
                                 <div className="col-sm-12">
                                     <div className="card">
                                         <div className="card-header">
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Arabic {ArabicCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Arabic {ArabicCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
                                             <div className="btn-popup pull-right">
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Arabic
+                                                <Datatable
+                                                    currentTab="Arabic"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -402,16 +569,22 @@ export class Brands extends Component {
                                 <div className="col-sm-12">
                                     <div className="card">
                                         <div className="card-header">
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Completed {CompletedCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Completed {CompletedCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
                                             <div className="btn-popup pull-right">
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Completed
+                                                <Datatable
+                                                    currentTab="Completed"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -430,16 +603,22 @@ export class Brands extends Component {
                                     <div className="card">
                                         <div className="card-header">
                                             <button type="button" className="pull-right" style={{cursor: 'pointer' }} onClick={()=>this.download("Confirmed")} data-toggle="modal" data-original-title="test" data-target="#exampleModal">csv</button>
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Confirmed {ConfirmedCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Confirmed {ConfirmedCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
                                             <div className="btn-popup pull-right">
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Confirmed
+                                                <Datatable
+                                                    currentTab="Confirmed"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -458,16 +637,22 @@ export class Brands extends Component {
                                     <div className="card">
                                         <div className="card-header">
                                             <button type="button" className="pull-right" style={{cursor: 'pointer' }} onClick={()=>this.download('Done')} data-toggle="modal" data-original-title="test" data-target="#exampleModal">csv</button>
-                                            <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Done {DoneCount} items</small></h5>
+                                            <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Done {DoneCount} items</small></h5>
+                                            <div className="form-group row">
+                                                {brandPicture === "" ?
+                                                    <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                    :    
+                                                    <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                            </div>
                                         </div>
                                         <div className="card-body">
                                             <div className="btn-popup pull-right">
                                             </div>
                                             <div className="clearfix"></div>
                                             <div id="basicScenario" className="product-physical">
-                                                <Done
+                                                <Datatable
+                                                    currentTab="Done"
                                                     multiSelectOption={false}
-                                                    myData={data} 
                                                     pageSize={5} 
                                                     pagination={true}
                                                     class="-striped -highlight" 
@@ -496,7 +681,13 @@ export class Brands extends Component {
                                         <div className="card">
                                             <div className="card-header">
                                                 <button type="button" className="btn btn-primary pull-right" onClick={this.onOpenModal} data-toggle="modal" data-original-title="test" data-target="#exampleModal">Add Item</button>
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Submitted {SubmittedCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Submitted {SubmittedCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>
                                             </div>
                                             <div className="card-body">
         
@@ -509,56 +700,126 @@ export class Brands extends Component {
                                                         <div className="modal-body">
                                                             <form>
                                                                 {this.renderAlert()}
-                                                                <div className="form-group">
-                                                                    <input className="form-control" ref={(ref) => { this.uploadInput = ref; }} type="file" required={true}/>
+
+                                                                {this.state.file !== "" ?
+                                                                    <div className="form-group">                                                              
+                                                                        <img className="form-control" src={this.state.file} style={{width: 900, height: 900, marginLeft: 'auto', marginRight: 'auto'}} />
+                                                                    </div>
+                                                                    :
+                                                                    <></>
+                                                                }
+                                                                <div className="form-group row">                                                              
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Image :</span></label>
+                                                                    <input className="form-control col-md-9" ref={(ref) => { this.uploadInput = ref; }} type="file" onChange={this.handleFileChange} required={true}/>
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >UPC :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="upc" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Product Info</span></label>
+                                                                    <hr
+                                                                        style={{
+                                                                            color: 'rgb(233, 233, 233)',
+                                                                            width: '100%',
+                                                                            height: 5
+                                                                        }}
+                                                                        className="col-md-8"
+                                                                    />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Title :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="title" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">UPC :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="upc" onChange={this.onChange} placeholder="UPC" />
+                                                                </div>
+                                                                
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Brand :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="brand" onChange={this.onChange} placeholder="Brand" />
+                                                                </div>
+
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Title</span></label>
+                                                                    <hr
+                                                                        style={{
+                                                                            color: 'rgb(233, 233, 233)',
+                                                                            width: '100%',
+                                                                            height: 5
+                                                                        }}
+                                                                        className="col-md-8"
+                                                                    />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Title(Arab) :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="titleArab" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Title :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="title" onChange={this.onChange} placeholder="Title" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Form :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="formValue" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Title(Arab) :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="titleArab" onChange={this.onChange} placeholder="Title(Arab)" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Type :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="typeValue" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Details</span></label>
+                                                                    <hr
+                                                                        style={{
+                                                                            color: 'rgb(233, 233, 233)',
+                                                                            width: '100%',
+                                                                            height: 5
+                                                                        }}
+                                                                        className="col-md-8"
+                                                                    />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Unit Of Size :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="unit" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Form :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="formValue" onChange={this.onChange} placeholder="Form" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Size :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="size" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Type :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="typeValue" onChange={this.onChange} placeholder="Type" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Product Description :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="description" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Unit Of Size :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="unit" onChange={this.onChange} placeholder="Unit Of Size" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >How To Use?</label>
-                                                                    <input type="text" className="form-control col-md-7" name="howToUse" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Size :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="size" onChange={this.onChange} placeholder="Size" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Product Description(Arab) :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="descriptionArab" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Description</span></label>
+                                                                    <hr
+                                                                        style={{
+                                                                            color: 'rgb(233, 233, 233)',
+                                                                            width: '100%',
+                                                                            height: 5
+                                                                        }}
+                                                                        className="col-md-8"
+                                                                    />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >How To Use(Arab)?</label>
-                                                                    <input type="text" className="form-control col-md-7" name="howToUseArab" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Description :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="description" onChange={this.onChange} placeholder="Product Description" />
                                                                 </div>
                                                                 <div className="form-group row">
-                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-4" >Editor Comments :</label>
-                                                                    <input type="text" className="form-control col-md-7" name="comments" onChange={this.onChange} />
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">How To Use?</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="howToUse" onChange={this.onChange} placeholder="How To Use?" />
+                                                                </div>
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Product Description(Arab)</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="descriptionArab" onChange={this.onChange} placeholder="Product Description" />
+                                                                </div>
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">How To Use(Arab)?</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="howToUseArab" onChange={this.onChange} placeholder="How To Use(Arab)" />
+                                                                </div>
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right" style={{color: 'rgb(0, 141, 216)', fontWeight: '700'}}>Other</span></label>
+                                                                    <hr
+                                                                        style={{
+                                                                            color: 'rgb(233, 233, 233)',
+                                                                            width: '100%',
+                                                                            height: 5
+                                                                        }}
+                                                                        className="col-md-8"
+                                                                    />
+                                                                </div>
+                                                                <div className="form-group row">
+                                                                    <label htmlFor="recipient-name" className="col-form-label col-md-3" ><span className="pull-right">Editor Comments :</span></label>
+                                                                    <input type="text" className="form-control col-md-9" name="comments" onChange={this.onChange} placeholder="UPC" />
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -570,9 +831,9 @@ export class Brands extends Component {
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Submitted
+                                                    <Datatable
+                                                        currentTab="Submitted"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -592,16 +853,22 @@ export class Brands extends Component {
                                     <div className="col-sm-12">
                                         <div className="card">
                                             <div className="card-header">
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Approved {ApprovedCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Approved {ApprovedCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>
                                             </div>
                                             <div className="card-body">
                                                 <div className="btn-popup pull-right">
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Approved
+                                                    <Datatable
+                                                        currentTab="Approved"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -621,16 +888,22 @@ export class Brands extends Component {
                                     <div className="col-sm-12">
                                         <div className="card">
                                             <div className="card-header">
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Arabic {ArabicCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Arabic {ArabicCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>                                            
                                             </div>
                                             <div className="card-body">
                                                 <div className="btn-popup pull-right">
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Arabic
+                                                    <Datatable
+                                                        currentTab="Arabic"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -650,16 +923,22 @@ export class Brands extends Component {
                                     <div className="col-sm-12">
                                         <div className="card">
                                             <div className="card-header">
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Completed {CompletedCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Completed {CompletedCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>
                                             </div>
                                             <div className="card-body">
                                                 <div className="btn-popup pull-right">
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Completed
+                                                    <Datatable
+                                                        currentTab="Completed"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -680,16 +959,22 @@ export class Brands extends Component {
                                         <div className="card">
                                             <div className="card-header">
                                                 <button type="button" className="pull-right" style={{cursor: 'pointer' }} onClick={()=>this.download('Confirmed')} data-toggle="modal" data-original-title="test" data-target="#exampleModal">csv</button>
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Confirmed {ConfirmedCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Confirmed {ConfirmedCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>
                                             </div>
                                             <div className="card-body">
                                                 <div className="btn-popup pull-right">
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Confirmed
+                                                    <Datatable
+                                                        currentTab="Confirmed"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -710,16 +995,22 @@ export class Brands extends Component {
                                         <div className="card">
                                             <div className="card-header">
                                                 <button type="button" className="pull-right" style={{cursor: 'pointer' }} onClick={()=>this.download('Done')} data-toggle="modal" data-original-title="test" data-target="#exampleModal">csv</button>
-                                                <h5>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Done {DoneCount} items</small></h5>
+                                                <h5 style={{color: 'rgb(0, 141, 216)'}}>{brandName}   <small style={{color: 'rgb(198, 198, 198)'}}>Done {DoneCount} items</small></h5>
+                                                <div className="form-group row">
+                                                    {brandPicture === "" ?
+                                                        <span style={{marginRight: 'auto', marginLeft: 'auto', fontSize: 20}}>{"Please select left sidebar."}</span>
+                                                        :    
+                                                        <img src={`${process.env.PUBLIC_URL}/assets/images/brands/${brandPicture}`} style={{width:'100px',height:'auto', marginRight: 'auto', marginLeft: 'auto'}} alt={"Item picture"} /> }
+                                                </div>
                                             </div>
                                             <div className="card-body">
                                                 <div className="btn-popup pull-right">
                                                 </div>
                                                 <div className="clearfix"></div>
                                                 <div id="basicScenario" className="product-physical">
-                                                    <Done
+                                                    <Datatable
+                                                        currentTab="Done"
                                                         multiSelectOption={false}
-                                                        myData={data} 
                                                         pageSize={5} 
                                                         pagination={true}
                                                         class="-striped -highlight" 
@@ -746,9 +1037,13 @@ const mapStateToProps = state => ({
     unknown_error: state.currentStatus.unknown_error,
     items: state.item.items,
     user: state.user.user,
+    uploadedFile: state.currentStatus.uploadedFile,
+    // currentTabData: service.getCurrentTabData(state.item.items, state.currentStatus.currentBrandId, service.getTabIndexFromText()),
+    categoryCountObj: service.getCategoryCount(state.item.items, state.currentStatus.currentBrandId),
+    brandInfo: service.getBrandInfoByBrandId(state.brand.activeBrands, state.currentStatus.currentBrandId),
 });
 
 export default connect(
     mapStateToProps,
-    { addItem, initializeAll }
+    { addItem, initializeAll, createItemIdList }
 )(Brands);

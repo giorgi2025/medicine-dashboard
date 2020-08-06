@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 jwt = require('jsonwebtoken');
 crypto = require('crypto');
-const IV_LENGTH = 16; // For AES, this is always 16
+const IV_LENGTH = 16; 
 
 var Config = require('../config/config');
 
@@ -23,28 +23,12 @@ var UserSchema = new mongoose.Schema({
     createdTime: {type: Date, default: Date.now },
 });
 
-UserSchema.methods.setPassword = function(password) {
-    let salt =  Config.salt;
-    let iv = crypto.randomBytes(IV_LENGTH);
-    let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(salt), iv);
-    let encrypted = cipher.update(password);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-   
-    this.password = iv.toString('hex') + 'g' + encrypted.toString('hex');
+UserSchema.methods.setPassword = function(password) { 
+    this.password = SET_PASSWORD_PART(password);
 };
 
 UserSchema.methods.getPassword = function() {
-
-    let salt = Config.salt;
-    let textParts = this.password.split('g');
-    let iv = Buffer.from(textParts.shift(), 'hex');
-    let encryptedText = Buffer.from(textParts.join('g'), 'hex');
-    let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(salt), iv);
-    let decrypted = decipher.update(encryptedText);
-   
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-   
-    return decrypted.toString();
+    return decrypted_password_from_hash();
 }
 
 UserSchema.methods.validatePassword = function(password) {

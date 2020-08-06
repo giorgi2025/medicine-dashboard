@@ -1,3 +1,4 @@
+var Config = require('../config/config');
 var mongoose = require('mongoose');
 const Brand = mongoose.model('Brand');
 const path = require('path');
@@ -25,12 +26,10 @@ exports.addBrand = async (req, res) =>  {
                 } else {
                     
                     let imageFile = req.files.file;
-                    const filePath = path.join(__dirname, "..", "client","public","assets","images","brands",`${req.body.fileName}`);
-                    imageFile.mv(filePath, function(err) {
-                      if (err) {
-                          return res.json({error:err});
-                        console.log(err);
-                      }
+                    imageFile.mv(`client/${Config.fileUploadedSubPath}/assets/images/brands/${req.body.fileName}`, function(err) {
+                        if (err) {
+                            console.log(err);
+                        }
                     });
  
                     Brand.find()
@@ -68,10 +67,10 @@ exports.updateBrand = async (req, res) =>  {
             if(req.files !== null) {
                 let imageFile = req.files.file;
             
-                imageFile.mv(`client/public/assets/images/brands/${req.body.fileName}`, function(err) {
-                if (err) {
-                    console.log(err);
-                }
+                imageFile.mv(`client/${Config.fileUploadedSubPath}/assets/images/brands/${req.body.fileName}`, function(err) {
+                    if (err) {
+                        console.log(err);
+                    }
                 });
             }
 
